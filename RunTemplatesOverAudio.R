@@ -8,98 +8,110 @@ library(seewave) #used for calculating acoustic features of detections
 
 # Set-up ------------------------------------------------------------------
 
-audioDirectory <- "E:/BTF_Recordings/BTF_RoadNoise2020_44.1kHz"
-
-templateDirectory <- "templates_BTF/binaryPoint"
-
 # load templates
+templates <- readBinTemplates(dir = "./templates_BTF/binaryPoint/")
 
 # list audio files to run templates over
-audio_to_analyse <- list.files(path = audioDirectory, pattern = "*.wav$", full.names = TRUE)
+audio_to_analyse <- list.files(path = "E:/BTF_Recordings/BTF_RoadNoise2020_44.1kHz", 
+                               pattern = "*.wav$", full.names = TRUE)
+
+# labelled data to assess template performance
+labelledData <- list.files(path = "selectionTables_BTF/2020_RoadNoiseSurveys",
+                           pattern = "*.txt$", full.names = TRUE)
+
+# subset audio to match those we have selection tables for
+audio_to_analyse <- audio_to_analyse[gsub("wav", "", basename(audio_to_analyse)) %in% gsub("Table.*", "", basename(labelledData))]
+
+
+# Data frame for results --------------------------------------------------
+
+#create an empty dataframe to store results
+TemplatePerformance <- data.frame(Recording = character(),
+                                  Template = character(),
+                                  ScoreCutoff = numeric(),
+                                  #WindowLength = numeric(),
+                                  TruePos = numeric(),
+                                  TrueNeg = numeric(),
+                                  FalsePos = numeric(),
+                                  FalseNeg = numeric())
 
 
 # Run templates over audio ------------------------------------------------
 
-TemplateDetections <- list()
-for (n in 1:length(audio_to_analyse)) {
+#TemplateDetections <- list()
+for (n in (1:length(audio_to_analyse))[1:2]) {
   
-  #loop over each collection of templates - may be different template settings (e.g. window length), or different species
-  for (templateSet in 1:length(templatesToRun)) {
+  #run template over audio, find peaks, and extract detections
+  scores <- binMatch(survey = audio_to_analyse[n],
+                     templates = templates,
+                     show.prog = FALSE)
+  peaks <- findPeaks(scores)
+  detections <- getDetections(peaks)
+  
+  
+  templateCombinations <- combn(1:length(templates@templates), 3, simplify = F)
+  
+  # align detections of multiple templates
+  alignedDetections <- data.frame(template = character(),
+                                  date.time = numeric(),
+                                  time = numeric(),
+                                  score = numeric())
+  for (combination in templateCombinations) {
+    temp <- timeAlign(x = peaks[combination], tol = 0.672, what = "detections")
+    temp$template <- as.character(paste(combination, collapse = ","))
     
-    Template_Info <- data.frame(Template = basename(names(templatesToRun[[templateSet]]@templates)))
-    Template_Info$Duration <- sapply(templatesToRun[[templateSet]]@templates, function(x) x@duration)
-    
-    #Calculate scores and find peaks
-    cscores <- binMatch(survey = audio_to_analyse[[n]], #gsub("*.flac$", ".wav", audio_to_analyse[[n]])
-                        templates = templatesToRun[[templateSet]],
-                        quiet = TRUE, #supresses status of which template being matched
-                        time.source = "filename", #fileinfo has wrong datetime but supresses warning message, use filename when named correctly
-                        write.wav = FALSE) #need to write wave file when using 'wave object'
-    
-    peaks <- findPeaks(cscores)
-    
-    #Create 'for loop' to save detections at different cut-off values
-    scoreCutoffs <- seq(2, 20, 1)
-    for (cutoff in scoreCutoffs) {
-      templateCutoff(peaks) <- rep(cutoff, length(templatesToRun[[templateSet]]@templates))
+    alignedDetections <- rbind(alignedDetections, temp)
+  }
+  
+  alldetections <- rbind(detections, alignedDetections)
+  alldetections$template <- factor(alldetections$template)
+  
+  
+  #read in selection table and rename columns to be useable with the 'eventEval' function
+  selectionTable <- read.table(labelledData[n], sep = "\t", header = TRUE)
+  
+  colnames(selectionTable)[which(colnames(selectionTable) == "Begin.Time..s.")] <- "start.time"
+  colnames(selectionTable)[which(colnames(selectionTable) == "End.Time..s.")] <- "end.time"
+  colnames(selectionTable)[which(colnames(selectionTable) == "Low.Freq..Hz.")] <- "min.frq"
+  colnames(selectionTable)[which(colnames(selectionTable) == "High.Freq..Hz.")] <- "max.frq"
+  
+  if (nrow(selectionTable) == 0) {
+    selectionTable[1,] <- c(1, 1, 1, -10, -10, 0, 0, 'Neg')
+    selectionTable$start.time <- as.numeric(selectionTable$start.time)
+    selectionTable$end.time <- as.numeric(selectionTable$end.time)
+    selectionTable$name <- "Neg"
+  } else {
+    selectionTable$name <- "BTF"
+  }
+  
+  scoreCutoffs <- seq(2, 20, 1)
+  for (template in levels(alldetections$template)) {
+    for (score in scoreCutoffs) {
+      #evaluate detections using eventEval
+      evaluation <- eventEval(detections = alldetections[alldetections$template == template,],
+                              standard = selectionTable,
+                              score.cutoff = score,
+                              tol = 0.6)
+      evaluation <- evaluation[evaluation$template != "Neg", ]
       
+      detectionSummary <- summary(factor(evaluation$outcome, levels = c('TRUE +', 'TRUE -', 'FALSE +', 'FALSE -')))
       
-      #Check for no detections which can cause errors
-      if (max(sapply(peaks@detections, function(x) nrow(x))) == 0) { #if no detections, move on
-        next
+      #if there were no detections set 'FALSE -' value to number of rows in 'selectionTable'
+      if (nrow(detections) == 0) {
+        detectionSummary['FALSE -'] <- nrow(selectionTable)
       }
       
-      
-      detections <- getDetections(peaks)
-      
-      detections$template <- basename(detections$template)
-      detections$template <- factor(detections$template)
-      
-      detections$Recording <- basename(audio_to_analyse[[n]])
-      detections$cutoff <- cutoff
-      
-      TemplateDetections[[paste0(basename(audio_to_analyse[[n]]), "_", cutoff, "_indtemplates")]] <- detections
-      
-      #Combine detections from templates
-      
-      if (sum(sapply(peaks@detections, function(x) nrow(x)) > 1) > 1) { #if a max of one detection per template
-        #merge peaks within 0.4
-        alignedDetections <- timeAlign(x = peaks, tol = templateTolerance, what = "detections")
-        
-        alignedDetections$template <- "combined"
-        alignedDetections$template <- factor(alignedDetections$template)
-      } else {
-        #timeAlign fails with only 1 template having a detection and if multiple templates have only a max of 1 detection
-        
-        alignedDetections <- do.call(rbind, peaks@detections)
-        alignedDetections <- rownames_to_column(alignedDetections, var = "template")
-        alignedDetections <- alignedDetections[order(alignedDetections$time),] 
-        
-        d <- c(NA, diff(alignedDetections$time, differences = 1))
-        
-        tolerance <- templateTolerance
-        
-        if (min(d, na.rm = TRUE) < tolerance) {
-          alignedDetections <- alignedDetections[-c(which(d < tolerance)[which(alignedDetections$score[which(d < tolerance)] - alignedDetections$score[which(d < tolerance)-1] < 0)],
-                                                    (which(d < tolerance)-1)[which(alignedDetections$score[which(d < tolerance)] - alignedDetections$score[which(d < tolerance)-1] > 0)]),]
-          
-        }
-      }
-      
-      alignedDetections$template <- "combined"
-      alignedDetections$template <- factor(alignedDetections$template)
-      
-      alignedDetections$Recording <- basename(audio_to_analyse[[n]])
-      alignedDetections$cutoff <- cutoff
-      
-      TemplateDetections[[paste0(basename(audio_to_analyse[[n]]), "_", cutoff, "_alignedtemplates")]] <- alignedDetections
+      TemplatePerformance <- rbind(TemplatePerformance,
+                                   data.frame(Recording = audio_to_analyse[n],
+                                              Template = template,
+                                              ScoreCutoff = score,
+                                              #WindowLength = windowLength,
+                                              TruePos = detectionSummary[['TRUE +']],
+                                              TrueNeg = detectionSummary[['TRUE -']],
+                                              FalsePos = detectionSummary[['FALSE +']],
+                                              FalseNeg = detectionSummary[['FALSE -']]))
     }
   }
 }
 
-
-TemplateDetections <- do.call(rbind, TemplateDetections)
-rownames(TemplateDetections) <- NULL
-
-saveRDS(TemplateDetections, file = paste0(getwd(), "/_TestAudio_Wambiana_45-178_Labelled_New/TemplateDetections_Lrubella.rds"))
-
+saveRDS(TemplatePerformance, "outputs/TemplatePerformance.rds")
