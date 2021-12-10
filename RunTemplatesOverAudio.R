@@ -115,3 +115,9 @@ for (n in (1:length(audio_to_analyse))[1:2]) {
 }
 
 saveRDS(TemplatePerformance, "outputs/TemplatePerformance.rds")
+
+# clear environment
+rm(list = ls())
+
+# run script to plot performance metrics - also creates new readme
+source("scripts/PlotTemplatePerformance.R")
