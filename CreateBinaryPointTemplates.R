@@ -27,7 +27,7 @@ for (templateFile in 1:length(templateFiles)) {
                          "_wl", windowLength)
   
   templateBin[[templateFile]] <- makeBinTemplate(clip = templateFiles[templateFile],
-                                                 frq.lim = c(1.8, 3.6), #frequency limits for template
+                                                 frq.lim = c(1.8, 4), #frequency limits for template
                                                  score.cutoff = templateCutoffValue,
                                                  wl = windowLength,
                                                  select = "rectangle",
@@ -39,7 +39,9 @@ for (templateFile in 1:length(templateFiles)) {
   dev.off()
 }
 
-# write templates to file
+
+# Write templates to file -------------------------------------------------
+
 templates <- do.call(combineBinTemplates, templateBin)
 
 writeBinTemplates(templates,

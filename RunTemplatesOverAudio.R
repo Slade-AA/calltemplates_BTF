@@ -39,7 +39,7 @@ TemplatePerformance <- data.frame(Recording = character(),
 # Run templates over audio ------------------------------------------------
 
 #TemplateDetections <- list()
-for (n in (1:length(audio_to_analyse))[1:2]) {
+for (n in (1:length(audio_to_analyse))[11:49]) {
   
   #run template over audio, find peaks, and extract detections
   scores <- binMatch(survey = audio_to_analyse[n],
@@ -115,6 +115,11 @@ for (n in (1:length(audio_to_analyse))[1:2]) {
 }
 
 saveRDS(TemplatePerformance, "outputs/TemplatePerformance.rds")
+
+save(templates, TemplatePerformance, file = paste0("outputs/backups/", Sys.Date(), "_templates&performance.RData"))
+
+
+# Wrap-up -----------------------------------------------------------------
 
 # clear environment
 rm(list = ls())
