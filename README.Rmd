@@ -7,7 +7,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # calltemplates_BTF
-Scripts and analysis for call templates (monitoR) of the black-throated finch
+Scripts and analysis for call templates (monitoR) of the black-throated finch. Using binary-point templates.
 
 
 ## To do
