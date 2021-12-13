@@ -11,7 +11,7 @@ jobs:
   render:
     name: Render README
     # The type of runner that the job will run on
-    runs-on: macOS-latest
+    runs-on: 'macOS-10.15'
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
