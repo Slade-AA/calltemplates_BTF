@@ -21,15 +21,16 @@ finch. Using binary-point templates.
 ### 2020 Road noise survey
 
 Performance of individual templates at different cutoff values (2-20)
-![Alt text](outputs/figures/Plot_SingleTemplates.png)
+![Alt text](outputs/figures/Plot_2020_SingleTemplates_PR.png)
 
 Performance of groups of 3 templates at different cutoff values (2-20)
-![Alt text](outputs/figures/Plot_MultipleTemplates.png)
+![Alt text](outputs/figures/Plot_2020_MultipleTemplates_PR.png)
 
 ### 2018 Recordings
 
 Performance of individual templates at different cutoff values (2-20)
-![Alt text](outputs/figures/Plot_2018_SingleTemplates.png)
+![Alt text](outputs/figures/Plot_2018_SingleTemplates_Comb.png) ![Alt
+text](outputs/figures/Plot_2018_SingleTemplates_PR.png)
 
 Performance of groups of 3 templates at different cutoff values (2-20)
-![Alt text](outputs/figures/Plot_2018_MultipleTemplates.png)
+![Alt text](outputs/figures/Plot_2018_MultipleTemplates_PR.png)
