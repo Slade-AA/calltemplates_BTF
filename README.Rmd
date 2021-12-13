@@ -28,7 +28,7 @@ Performance of groups of 3 templates at different cutoff values (2-20)
 
 ### 2018 Recordings
 Performance of individual templates at different cutoff values (2-20)
-
+![Alt text](outputs/figures/Plot_2018_SingleTemplates.png)
 
 Performance of groups of 3 templates at different cutoff values (2-20)
-
+![Alt text](outputs/figures/Plot_2018_MultipleTemplates.png)

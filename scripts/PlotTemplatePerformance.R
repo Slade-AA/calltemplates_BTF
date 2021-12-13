@@ -59,7 +59,7 @@ Plot_SingleTemplates <- ggplot(data = PerformanceSummary[PerformanceSummary$Temp
   theme(legend.position = "bottom") +
   guides(colour = guide_legend(nrow = 3))
 
-ggsave(filename = "outputs/figures/Plot_SingleTemplates.png",
+ggsave(filename = "outputs/figures/Plot_2018_SingleTemplates.png",
        plot = Plot_SingleTemplates,
        height = 15, width = 20, units = "cm", dpi = 800)
 
@@ -74,6 +74,6 @@ Plot_MultipleTemplates <- ggplot(data = PerformanceSummary[PerformanceSummary$Te
   theme(legend.position = "bottom") +
   guides(colour = guide_legend(nrow = 3))
 
-ggsave(filename = "outputs/figures/Plot_MultipleTemplates.png",
+ggsave(filename = "outputs/figures/Plot_2018_MultipleTemplates.png",
        plot = Plot_MultipleTemplates,
        height = 15, width = 20, units = "cm", dpi = 800)

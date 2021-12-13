@@ -11,12 +11,15 @@ library(seewave) #used for calculating acoustic features of detections
 # load templates
 templates <- readBinTemplates(dir = "./templates_BTF/binaryPoint/")
 
+# name for current audio run
+surveyRun <- "2018"
+
 # list audio files to run templates over
-audio_to_analyse <- list.files(path = "E:/BTF_Recordings/BTF_RoadNoise2020_44.1kHz", 
+audio_to_analyse <- list.files(path = "E:/BTF_Recordings/BTF_2018_44.1kHz", 
                                pattern = "*.wav$", full.names = TRUE)
 
 # labelled data to assess template performance
-labelledData <- list.files(path = "selectionTables_BTF/2020_RoadNoiseSurveys",
+labelledData <- list.files(path = "selectionTables_BTF/2018",
                            pattern = "*.txt$", full.names = TRUE)
 
 # subset audio to match those we have selection tables for
@@ -39,7 +42,8 @@ TemplatePerformance <- data.frame(Recording = character(),
 # Run templates over audio ------------------------------------------------
 
 #TemplateDetections <- list()
-for (n in (1:length(audio_to_analyse))[11:49]) {
+start.time <- Sys.time()
+for (n in (1:length(audio_to_analyse))[11:62]) {
   
   #run template over audio, find peaks, and extract detections
   scores <- binMatch(survey = audio_to_analyse[n],
@@ -113,16 +117,18 @@ for (n in (1:length(audio_to_analyse))[11:49]) {
     }
   }
 }
+end.time <- Sys.time()
+end.time - start.time
 
-saveRDS(TemplatePerformance, "outputs/TemplatePerformance.rds")
+saveRDS(TemplatePerformance, paste0("outputs/", surveyRun, "_TemplatePerformance.rds"))
 
-save(templates, TemplatePerformance, file = paste0("outputs/backups/", Sys.Date(), "_templates&performance.RData"))
+save(templates, TemplatePerformance, file = paste0("outputs/backups/", Sys.Date(), "_", surveyRun, "_templates&performance.RData"))
 
 
 # Wrap-up -----------------------------------------------------------------
 
 # clear environment
-rm(list = ls())
+#rm(list = ls())
 
 # run script to plot performance metrics - also creates new readme
-source("scripts/PlotTemplatePerformance.R")
+#source("scripts/PlotTemplatePerformance.R")
