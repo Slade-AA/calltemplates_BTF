@@ -1,0 +1,38 @@
+---
+output: 
+  github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# calltemplates_BTF
+Scripts and analysis for call templates (monitoR) of the black-throated finch
+
+
+## To do
+* Run templates over following years data
+* Test CNN on template detections
+
+## Results
+
+### 2020 Road noise survey
+Performance of individual templates at different cutoff values (2-20)
+![Alt text](outputs/figures/Plot_SingleTemplates.png)
+
+Performance of groups of 3 templates at different cutoff values (2-20)
+![Alt text](outputs/figures/Plot_MultipleTemplates.png)
+
+### Shannon diversity index
+Correlation between shannon diversity index for birds and various acoustic indices
+![Alt text](outputs/figures/birds_shannon.png)
+
+Correlation between shannon diversity index for frogs and various acoustic indices
+![Alt text](outputs/figures/frogs_shannon.png)
+
+### Total abundance
+Correlation between total bird abundance and various acoustic indices
+![Alt text](outputs/figures/birds_count.png)
+
+Correlation between total frog abundance and various acoustic indices
+![Alt text](outputs/figures/frogs_count.png)
