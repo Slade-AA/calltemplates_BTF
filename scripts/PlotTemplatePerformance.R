@@ -2,6 +2,8 @@
 # Load packages -----------------------------------------------------------
 
 library(tidyverse)
+library(ggpubr)
+library(cowplot)
 
 TemplatePerformance <- readRDS("outputs/TemplatePerformance.rds")
 
@@ -47,23 +49,60 @@ PerformanceSummary <- TemplatePerformance %>%
             FalseNeg = sum(FalseNeg)) %>% 
   mutate(Recall = TruePos/(TruePos+FalseNeg),
          FDR = FalsePos/(TruePos+FalsePos),
-         Precision = TruePos/(TruePos+FalsePos))
+         Precision = TruePos/(TruePos+FalsePos)) %>% 
+  mutate(F1 = 2*((Precision*Recall)/(Precision+Recall)))
 
+#Single templates
 individualTemplates <- grep("template*", levels(PerformanceSummary$Template), value = TRUE)
 
-Plot_SingleTemplates <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% individualTemplates,], aes(x = Recall, y = Precision, 
-                                                                                                                     group = Template, colour = Template)) + 
+Plot_SingleTemplates_PR <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% individualTemplates,], aes(x = Recall, y = Precision, 
+                                                                                                                        group = Template, colour = Template)) + 
   geom_line(lwd = 1) +
   scale_x_continuous(limits = c(0,1)) +
   theme_bw() +
   theme(legend.position = "bottom") +
   guides(colour = guide_legend(nrow = 3))
 
-ggsave(filename = "outputs/figures/Plot_2018_SingleTemplates.png",
-       plot = Plot_SingleTemplates,
-       height = 15, width = 20, units = "cm", dpi = 800)
+ggsave(filename = "outputs/figures/Plot_2018_SingleTemplates_PR.png",
+       plot = Plot_SingleTemplates_PR,
+       height = 15, width = 15, units = "cm", dpi = 800)
 
+Plot_SingleTemplates_P <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% individualTemplates,], aes(x = ScoreCutoff, y = Precision, 
+                                                                                                                       group = Template, colour = Template)) + 
+  geom_line(lwd = 1) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 3))
 
+Plot_SingleTemplates_R <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% individualTemplates,], aes(x = ScoreCutoff, y = Recall, 
+                                                                                                                       group = Template, colour = Template)) + 
+  geom_line(lwd = 1) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 3))
+
+Plot_SingleTemplates_F1 <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% individualTemplates,], aes(x = ScoreCutoff, y = F1, 
+                                                                                                                       group = Template, colour = Template)) + 
+  geom_line(lwd = 1) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 3))
+
+legend_b <- get_legend(Plot_SingleTemplates_P)
+
+Plot_SingleTemplates_Comb <- plot_grid(Plot_SingleTemplates_P + rremove('legend'), 
+                                       Plot_SingleTemplates_R + rremove('legend'), 
+                                       Plot_SingleTemplates_F1 + rremove('legend'),
+                                       nrow = 1)
+
+Plot_SingleTemplates_Comb <- plot_grid(Plot_SingleTemplates_Comb, legend_b,
+                                       nrow = 2, rel_heights = c(1, 0.2))
+
+ggsave(filename = "outputs/figures/Plot_2018_SingleTemplates_Comb.png",
+       plot = Plot_SingleTemplates_Comb,
+       height = 12, width = 30, units = "cm", dpi = 800)
+
+#Groups of templates
 combinationTemplates <- grep("template*", levels(PerformanceSummary$Template), value = TRUE, invert = TRUE)
 
 Plot_MultipleTemplates <- ggplot(data = PerformanceSummary[PerformanceSummary$Template %in% combinationTemplates,], aes(x = Recall, y = Precision, 
@@ -74,6 +113,6 @@ Plot_MultipleTemplates <- ggplot(data = PerformanceSummary[PerformanceSummary$Te
   theme(legend.position = "bottom") +
   guides(colour = guide_legend(nrow = 3))
 
-ggsave(filename = "outputs/figures/Plot_2018_MultipleTemplates.png",
+ggsave(filename = "outputs/figures/Plot_2018_MultipleTemplates_PR.png",
        plot = Plot_MultipleTemplates,
-       height = 15, width = 20, units = "cm", dpi = 800)
+       height = 15, width = 15, units = "cm", dpi = 800)
